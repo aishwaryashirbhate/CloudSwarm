@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudSwarm prototype infrastructure
+Parameters:
+  LambdaRuntime:
+    Type: String
+    Default: python3.9
+Resources:
+  EventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: cloudswarm-bus
+  ContextTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: cloudswarm-context
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  DevAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cloudswarm-dev-agent
+      Handler: dev_agent.lambda_handler
+      Runtime: !Ref LambdaRuntime
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              # Placeholder Developer Agent logic
+              print("Developer Agent received event:", event)
+              return {"status": "ok"}
+      Environment:
+        Variables:
+          EVENT_BUS_NAME: !Ref EventBus
+          CONTEXT_TABLE: !Ref ContextTable
+      Timeout: 30
+      MemorySize: 128
+  QaAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cloudswarm-qa-agent
+      Handler: qa_agent.lambda_handler
+      Runtime: !Ref LambdaRuntime
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("QA Agent event:", event)
+              return {"status": "ok"}
+      Timeout: 30
+      MemorySize: 128
+  OpsAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cloudswarm-ops-agent
+      Handler: ops_agent.lambda_handler
+      Runtime: !Ref LambdaRuntime
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Ops Agent event:", event)
+              return {"status": "ok"}
+      Timeout: 30
+      MemorySize: 128
+  BizAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cloudswarm-biz-agent
+      Handler: business_agent.lambda_handler
+      Runtime: !Ref LambdaRuntime
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Business Agent event:", event)
+              return {"status": "ok"}
+      Timeout: 30
+      MemorySize: 128
+Outputs:
+  EventBusName:
+    Value: !Ref EventBus
+    Description: The name of the EventBridge bus
