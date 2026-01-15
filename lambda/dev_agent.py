@@ -1,6 +1,7 @@
 import json
 import os
 import boto3
+import utils
 
 # Initialize AWS clients
 eventbridge = boto3.client('events')
@@ -9,7 +10,6 @@ dynamodb = boto3.resource('dynamodb')
 # Environment variables for context table and event bus
 CONTEXT_TABLE = os.environ.get('CONTEXT_TABLE')
 EVENT_BUS_NAME = os.environ.get('EVENT_BUS_NAME')
-
 table = dynamodb.Table(CONTEXT_TABLE)
 
 def lambda_handler(event, context):
@@ -19,6 +19,11 @@ def lambda_handler(event, context):
     """
     # Extract feature from incoming event detail
     feature = event.get('detail', {}).get('feature', 'unknown')
+    # Store a simple embedding for the feature (placeholder)
+    try:
+        utils.store_embedding(feature, [0.0])
+    except Exception:
+        pass  # ignore storage errors for prototype
     # Save the current feature to the context table
     table.put_item(Item={'id': 'current_feature', 'feature': feature})
     # Send a FeatureReady event to the bus
@@ -28,4 +33,4 @@ def lambda_handler(event, context):
         'Detail': json.dumps({'feature': feature}),
         'EventBusName': EVENT_BUS_NAME
     }])
-    return {'status': 'FeatureReady emitted'}
+    return {'status': 'feature stored and event emitted'}
